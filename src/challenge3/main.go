@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"strings"
 )
 
 func hextoBase64(input []byte) ([]byte, int) {
@@ -102,26 +103,74 @@ func decryptXorCipher(hexEncrypted []byte, numBytes int) ([]byte, int) {
 	decoded, n := decodeHex(hexEncrypted)
 	var decrypted []byte
 	plaintext := []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	frequencies := getFrequencies(decoded, plaintext, numBytes)
-	scores := make([]int, len(frequencies))
-	for i := range frequencies {
-		commonLetters := "aeiourstnyd"
-		for j := range commonLetters {
-			frequency, ok := frequencies[i][commonLetters[j]]
-			if ok == false {
-				continue
+	englishFrequencies := map[string]float64{
+		"a": 8.167,
+		"b": 1.492,
+		"c": 2.782,
+		"d": 4.253,
+		"e": 12.702,
+		"f": 2.228,
+		"g": 2.015,
+		"h": 6.094,
+		"i": 6.966,
+		"j": 0.153,
+		"k": 0.772,
+		"l": 4.025,
+		"m": 2.406,
+		"n": 6.749,
+		"o": 7.507,
+		"p": 1.929,
+		"q": 0.095,
+		"r": 5.987,
+		"s": 6.327,
+		"t": 9.056,
+		"u": 2.758,
+		"v": 0.978,
+		"w": 2.360,
+		"x": 0.150,
+		"y": 1.974,
+		"z": 0.074,
+		" ": 20.000, // Priority to spaces
+	}
+	commonLetters := make([]byte, 0)
+	for i := range englishFrequencies {
+		commonLetters = append(commonLetters, []byte(i)...)
+	}
+
+	scores := make(map[byte]float64)
+	for i := range plaintext {
+		key := generateKey(plaintext, i, 1, len(hexEncrypted))
+		decrypted := xor(decoded, key)
+		for j := range decoded {
+			_, ok := englishFrequencies[string(decrypted[j])]
+			if ok == true {
+				_, ok := scores[plaintext[i]]
+				if ok == false {
+					scores[key[0]] = englishFrequencies[strings.ToLower(string(decrypted[j]))]
+				} else {
+					scores[key[0]] += englishFrequencies[strings.ToLower(string(decrypted[j]))]
+				}
 			} else {
-				scores[i] += frequency
 			}
 		}
 	}
 
+	/*
+		for i := range scores {
+			fmt.Println("Key:", string(i), " -> Value:", scores[i], "Decoded:", string(xor(decoded, bytes.Repeat([]byte(string(i)), len(decoded)))))
+		}
+	*/
+
 	// We finally pick the byte-string with the maximum score
 	// If there are multiple candidates, the last candidate is chosen
-	maxScore := 0
-	for i := range scores {
-		if scores[i] >= maxScore {
-			maxScore = scores[i]
+	maxScore := 0.0
+	for i := range plaintext {
+		_, ok := scores[plaintext[i]]
+		if ok == false {
+			continue
+		}
+		if scores[plaintext[i]] >= maxScore {
+			maxScore = scores[plaintext[i]]
 			key := generateKey(plaintext, i, numBytes, n)
 			decrypted = xor(decoded, key)
 			// fmt.Println("For character", string(plaintext[i]), ": Decrypted =", string(decrypted))
