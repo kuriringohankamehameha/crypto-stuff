@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
@@ -68,6 +69,67 @@ func fixedXorDecrypt(input []byte, mask []byte) ([]byte, int) {
 	return xor(decodedInput, decodedMask), max(n, m)
 }
 
+func getFrequencies(decoded []byte, plaintext []byte) []map[byte]int {
+	// Accumulates the frequencies of every occuring character across the set of possible keys (English letters)
+	frequencies := make([]map[byte]int, len(plaintext))
+	for i := range frequencies {
+		frequencies[i] = make(map[byte]int)
+	}
+
+	for i := range plaintext {
+		key := bytes.Repeat(plaintext[i:i+1], len(plaintext)) // Single character key must be repeated
+		decrypted := xor(decoded, key)
+		// fmt.Println("For key:", string(plaintext[i]), "Decoded:", string(decrypted))
+		for j := range decrypted {
+			if decrypted[j] == plaintext[i] {
+				// Likely empty. So we skip it to avoid unnecessary counting of the key itself
+				continue
+			}
+			_, ok := frequencies[i][decrypted[j]]
+			if ok == false {
+				frequencies[i][decrypted[j]] = 1
+			} else {
+				frequencies[i][decrypted[j]] += 1
+			}
+		}
+	}
+	return frequencies
+}
+
+func decryptXorCipher(hexEncrypted []byte, keySize int) ([]byte, int) {
+	// Decrypts a hex-encrypted string, assuming that it has been XORd with a key of size `keySize` bytes
+	// ASSUMPTION: The string alphabet consists only of English plaintext letters
+	decoded, n := decodeHex(hexEncrypted)
+	var decrypted []byte
+	plaintext := []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	frequencies := getFrequencies(decoded, plaintext)
+	scores := make([]int, len(frequencies))
+	for i := range frequencies {
+		commonLetters := "aeiourstnyd"
+		for j := range commonLetters {
+			frequency, ok := frequencies[i][commonLetters[j]]
+			if ok == false {
+				continue
+			} else {
+				scores[i] += frequency
+			}
+		}
+	}
+
+	// We finally pick the byte-string with the maximum score
+	// If there are multiple candidates, the last candidate is chosen
+	maxScore := 0
+	for i := range scores {
+		if scores[i] >= maxScore {
+			maxScore = scores[i]
+			key := bytes.Repeat(plaintext[i:i+1], n) // Single character key must be repeated
+			decrypted = xor(decoded, key)
+			// fmt.Println("For character", string(plaintext[i]), ": Decrypted =", string(decrypted))
+		}
+	}
+	return decrypted, n
+}
+
 func main() {
 	inputbyteString := []byte("49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d")
 	decodedbyteString, n1 := hextoBase64(inputbyteString)
@@ -85,4 +147,7 @@ func main() {
 	if string(maskedOutput[:n2]) != string(xorAnswer) {
 		log.Panic("Wrong answer")
 	}
+
+	decryptedAnswer, n3 := decryptXorCipher([]byte("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"), 1)
+	fmt.Println("Single Byte XOR Decryption:", string(decryptedAnswer[:n3]))
 }
