@@ -5,7 +5,9 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"path"
 	"strings"
 )
 
@@ -26,7 +28,8 @@ func decodeHex(input []byte) ([]byte, int) {
 	output := make([]byte, hex.DecodedLen(len(input)))
 	numDecoded, err := hex.Decode(output, input)
 	if err != nil {
-		log.Fatal(err)
+		//return []byte(""), 0
+		log.Fatal("Error while decoding hex:\n", err)
 	}
 	return output, numDecoded
 }
@@ -72,29 +75,6 @@ func fixedXorDecrypt(input []byte, mask []byte) ([]byte, int) {
 
 func generateKey(alphabet []byte, position int, numBytes int, keySize int) []byte {
 	return bytes.Repeat(alphabet[position:position+numBytes], keySize/numBytes)
-}
-
-func getFrequencies(decoded []byte, plaintext []byte, numBytes int) []map[byte]int {
-	// Accumulates the frequencies of every occuring character across the set of possible keys (English letters)
-	frequencies := make([]map[byte]int, len(plaintext))
-	for i := range frequencies {
-		frequencies[i] = make(map[byte]int)
-	}
-
-	for i := range plaintext {
-		key := generateKey(plaintext, i, numBytes, len(decoded))
-		decrypted := xor(decoded, key)
-		// fmt.Println("For key:", string(plaintext[i]), "Decoded:", string(decrypted))
-		for j := range decrypted {
-			_, ok := frequencies[i][decrypted[j]]
-			if ok == false {
-				frequencies[i][decrypted[j]] = 1
-			} else {
-				frequencies[i][decrypted[j]] += 1
-			}
-		}
-	}
-	return frequencies
 }
 
 func decryptXorCipher(hexEncrypted []byte, numBytes int) ([]byte, int, float64) {
@@ -171,7 +151,40 @@ func decryptXorCipher(hexEncrypted []byte, numBytes int) ([]byte, int, float64) 
 	return decrypted, n, maxScore
 }
 
+func mostEnglish(words [][]byte) ([]byte, int) {
+	var likelyWord []byte
+	var maxScore float64
+	maxScore = 0.0
+	idx := 0
+	for i := range words {
+		decrypted, n, score := decryptXorCipher(words[i], 1)
+		if score >= maxScore {
+			maxScore = score
+			likelyWord = decrypted[:n]
+			idx = i
+		}
+	}
+	return likelyWord, idx
+}
+
+func processData(data []byte) ([]byte, int) {
+	words := make([][]byte, 0)
+	for _, m := range strings.Split(string(data), "\n") {
+		mbyte := []byte(m)
+		if len(mbyte) == 0 {
+			continue
+		}
+		words = append(words, mbyte[:len(mbyte)-1])
+	}
+	likelyWord, idx := mostEnglish(words)
+	return likelyWord, idx
+}
+
 func main() {
-	decryptedAnswer, n, _ := decryptXorCipher([]byte("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"), 1)
-	fmt.Println("Single Byte XOR Decryption:", string(decryptedAnswer[:n]))
+	data, err := ioutil.ReadFile(path.Join("src/challenge4", "input.txt"))
+	if err != nil {
+		log.Panic("Error while opening file:", err)
+	}
+	likelyWord, idx := processData(data)
+	fmt.Printf("Idx %d: '%s', length: %d", idx, string(likelyWord), len(string(likelyWord)))
 }
