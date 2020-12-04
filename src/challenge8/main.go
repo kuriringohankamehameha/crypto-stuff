@@ -12,6 +12,7 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"time"
 )
 
 func hextoBase64(input []byte) ([]byte, int) {
@@ -174,6 +175,16 @@ func getMaxRepetitions(repetitionMap map[int]int) (int, int) {
 	return ranks[0], repetitionMap[ranks[0]]
 }
 
+func runningtime(s string) (string, time.Time) {
+	log.Println("Start:	", s)
+	return s, time.Now()
+}
+
+func track(s string, startTime time.Time) {
+	endTime := time.Now()
+	log.Println("End:	", s, "took", endTime.Sub(startTime))
+}
+
 func simulateECB(cipherText []byte, keySize int) int {
 	// Finds the number of ciphertext repetitions
 	// and tries to correlate the maximum repeating word to ECB encryption
@@ -194,6 +205,7 @@ func simulateECB(cipherText []byte, keySize int) int {
 }
 
 func testAESECB() {
+	defer track(runningtime("AES Test Time"))
 	input := []byte("This is a sample input consisting of more than required")
 	key := []byte("ENCRYPTION KEYAB")
 	input, paddingSize := addPadding(input, len(key))
