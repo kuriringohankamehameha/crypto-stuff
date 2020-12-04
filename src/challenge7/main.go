@@ -58,6 +58,13 @@ func decodeBase64(input []byte) []byte {
 	return output
 }
 
+func addPadding(input []byte, blockSize int) ([]byte, int) {
+	paddingSize := blockSize - (len(input) % blockSize)
+	padding := make([]byte, paddingSize)
+	input = append(input, padding...)
+	return input, paddingSize
+}
+
 func DecryptAESECB(input []byte, key []byte) ([]byte, error) {
 	err := error(nil)
 	cipher, _err := aes.NewCipher(key)
@@ -70,24 +77,17 @@ func DecryptAESECB(input []byte, key []byte) ([]byte, error) {
 		return nil, err
 	}
 
+	if len(input)%blockSize != 0 {
+		err = errors.New("Input must be a multiple of the block size")
+		return nil, err
+	}
+
 	// Divide the input into blocks and decrypt it
 	decrypted := make([]byte, len(input))
 
 	for offset := 0; offset < len(input); offset += blockSize {
-		var padding []byte
-		var size int
-		if len(input)-offset < blockSize {
-			padding = make([]byte, blockSize-len(input)+offset)
-			size = len(input) - offset
-		} else {
-			padding = []byte{}
-			size = blockSize
-		}
-		a := append(decrypted[offset:offset+size], padding...)
-		b := append(input[offset:offset+size], padding...)
-		cipher.Decrypt(a, b)
+		cipher.Decrypt(decrypted[offset:offset+blockSize], input[offset:offset+blockSize])
 	}
-
 	return decrypted, nil
 }
 
@@ -99,11 +99,10 @@ func main() {
 	}
 	processed := decodeBase64(data)
 	decryptionKey := []byte("YELLOW SUBMARINE")
-	processed = decodeBase64(data)
+	processed, paddingSize := addPadding(processed, len(decryptionKey))
 	decrypted, err := DecryptAESECB(processed, decryptionKey)
 	if err != nil {
 		log.Fatal("Error during decryption:\n", err)
 	}
-	result := decrypted
-	fmt.Println("Decrypted:\n", string(result))
+	fmt.Println("Decrypted:\n", string(decrypted[:len(decrypted)-paddingSize]))
 }
