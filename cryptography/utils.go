@@ -90,7 +90,7 @@ func GetLines(filePath string) ([][]byte, error) {
 func getWords(data []byte) [][]byte {
 	words := make([][]byte, 0)
 	for _, m := range strings.Split(string(data), "\n") {
-		mbyte := decodeBase64([]byte(m))
+		mbyte := DecodeBase64([]byte(m))
 		if len(mbyte) == 0 {
 			continue
 		}
