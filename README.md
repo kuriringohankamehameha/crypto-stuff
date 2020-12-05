@@ -10,6 +10,18 @@ Attempts can be found at `src/challengeN/main.go`
 
 Current Progress: Set 1 challenges are complete
 
+Disclaimer: This code is not following the best practices, and several optimizations are possible. The repository is only for educational purposes, since I haven't found too many implementations in Go.
+
+### Challenge 4
+
+This involves finding the plaintext which has been single character XOR encrypted. Several approaches are possible, but we'll be using a frequency based detection. We first get the frequency distribution prior for the english alphabet. Also note that the space character (' ') is crucial in this distribution. We'll be assigning this to the highest probability (2x the probability of the next highest character - 'e')
+
+After we build our distribution table, we can simply do a brute force among the ascii characters (0-255) and only select the key and the word with the highest score globally.
+
+### Challenge 5
+
+This is straightforward encryption of a repeating key, using XOR.
+
 ### Challenge 6
 
 This challenge involves multiple steps in order to brute force attack the Vignere Encryption. Since the encryption uses a cyclic XOR function, it is possible to detect repeating patterns in the ciphertext through estimating the key size.
