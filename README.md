@@ -42,4 +42,39 @@ In challenge 7, Simply divide the input into blocks of text, and encrypt/decrypt
 
 Challenge 8 gives us a file for us to predict which line of text has been ECB encrypted. Since this encryption code is stateless, we try to look at the maximum number of ciphertext repetitions, since that will directly give us the number of plaintext repetitions. This correlation and one-one mapping is what makes ECB insecure, since the mapping is constant. In fact, it is so insecure that the Go standard library intentionally left it out in the crypto library!
 
+### Challenge 9
+
+I've already implemented the padding before for Challenge 7, so this was pretty much done already. The only other change was to add a padding character (previously I just assumed it to be '\x00')
+
+### Challenge 10
+
+This one was a good challenge involved in implementing AES Encryption and Decryption in CBC mode.
+
+Here, we have an additional *Initialization Vector* (IV) which is used for maintaining the state of the encryption/decryption, in addition to the symmetric key.
+
+This solves one of the major problems of ECB mode encryption/decryption, and makes it much harder to perform brute force attacks.
+
+For encryption, the process can be roughly summarized as follows:
+
+
+* Encryption in AES-CBC Mode:
+```
+    Here, Pn represents the nth plaintext block, while Cn represents the nth ciphertext block - IV = Initialization Vector)
+    P1 = Decrypt(C1) ^ IV
+	P2 = Decrypt(C2) ^ C1
+	...
+	Pn = Decrypt(CN) ^ Cn-1
+```
+
+* Decryption in AES-CBC Mode:
+```
+    Here, Pn represents the nth plaintext block, while Cn represents the nth ciphertext block - IV = Initialization Vector)
+	C1 = Encrypt(P1 ^ IV)
+	C2 = Encrypt(P2 ^ C1)
+	...
+	Cn = Encrypt(Pn ^ Cn-1)
+```
+
+Here, the `Encrypt()` and `Decrypt()` functions can be optained via the AES cipher.
+
 **********************
