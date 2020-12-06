@@ -1,11 +1,14 @@
 package cryptography
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/hex"
-	"log"
-	"strings"
 	"io/ioutil"
+	"log"
+	"math/rand"
+	"strings"
+	"time"
 )
 
 func HextoBase64(input []byte) ([]byte, int) {
@@ -63,6 +66,30 @@ func AddPadding(input []byte, blockSize int, paddingCharacter rune) ([]byte, int
 	}
 	input = append(input, padding...)
 	return input, paddingSize
+}
+
+func GenerateKey(alphabet []byte, position int, numBytes int, keySize int) []byte {
+	// Generates a repeating key
+	return bytes.Repeat(alphabet[position:position+numBytes], keySize/numBytes)
+}
+
+func GetRandomInteger(a int, b int) int {
+	// Generates a random integer from [a, b]
+	seed := rand.NewSource(time.Now().UnixNano())
+	rand := rand.New(seed)
+	return a + rand.Intn(b-a)
+}
+
+func GetRandomByteString(n int) []byte {
+	// Generates a random byte string
+	seed := rand.NewSource(time.Now().UnixNano())
+	rand := rand.New(seed)
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ "
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return b
 }
 
 func Xor(input []byte, key []byte) []byte {

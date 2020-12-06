@@ -174,3 +174,22 @@ func decryptAESCBC(input []byte, key []byte, IV []byte) ([]byte, error) {
 	}
 	return decrypted, nil
 }
+
+func GetRepetitions(cipherText []byte, keySize int) int {
+	// Finds the number of ciphertext repetitions
+	// and tries to correlate the maximum repeating word to ECB encryption
+	cipherTexts := make([][]byte, 0)
+
+	cipherText, _ = AddPadding(cipherText, keySize, rune('\x00'))
+	repetitions := 0
+
+	for i := 0; i < len(cipherText); i += keySize {
+		for j := range cipherTexts {
+			if string(cipherText[i:i+keySize]) == string(cipherTexts[j]) {
+				repetitions++
+			}
+		}
+		cipherTexts = append(cipherTexts, cipherText[i:i+keySize])
+	}
+	return repetitions
+}

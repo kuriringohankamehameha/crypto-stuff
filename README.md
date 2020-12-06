@@ -77,4 +77,20 @@ For encryption, the process can be roughly summarized as follows:
 
 Here, the `Encrypt()` and `Decrypt()` functions can be optained via the AES cipher.
 
+### Challenge 11
+
+This is a very nice challenge which needs us to determine the mode of AES encryption (ECB / CBC). Here, we construct an oracle which encrypts the input randomly via either ECB / CBC.
+
+```bash
+encrypted = oracle(input) # Can encrypt in either ECB / CBC modes
+```
+
+We need to find the mode of encryption which the oracle uses every time, given that we have no prior knowledge about the key / IV.
+
+Here, trying to find the repetitions via a fixed input will *not* work, since the input is randomly padded with bytes. Therefore, if the input is small, we have no way of detecting if ECB is even used!
+
+The most natural approach would be to try to construct intentionally repetitions on the input itself! If our input size is sufficiently large and containts multiple repeated plaintext blocks, the random padding could still not be able to contain ECB.
+
+So I assume that we can extend the input size arbitrarily, and prepend a repeating sequence of "0" of length 512 bytes. Now, to this processed input (`000...00 + input`), we find the number of repeating ciphertext blocks, which will then give ECB if the repetitions are beyond a threshold (assume `min(inputSize/blockSize)`). Otherwise, it is in CBC mode.
+
 **********************

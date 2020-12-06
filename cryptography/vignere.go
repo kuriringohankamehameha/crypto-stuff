@@ -1,7 +1,6 @@
 package cryptography
 
 import (
-	"bytes"
 	"encoding/hex"
 	"sort"
 	"strings"
@@ -36,11 +35,6 @@ func fixedXorDecrypt(input []byte, mask []byte) ([]byte, int) {
 	decodedInput, n := DecodeHex(input)
 	decodedMask, m := DecodeHex(mask)
 	return Xor(decodedInput, decodedMask), Intmax(n, m)
-}
-
-func generateKey(alphabet []byte, position int, numBytes int, keySize int) []byte {
-	// Generates a random key
-	return bytes.Repeat(alphabet[position:position+numBytes], keySize/numBytes)
 }
 
 func decryptXorCipher(hexEncrypted []byte, numBytes int) ([]byte, int, byte, float64) {
@@ -82,7 +76,7 @@ func decryptXorCipher(hexEncrypted []byte, numBytes int) ([]byte, int, byte, flo
 
 	scores := make(map[byte]float64)
 	for i := range plaintext {
-		key := generateKey(plaintext, i, 1, len(decoded))
+		key := GenerateKey(plaintext, i, 1, len(decoded))
 		decrypted := Xor(decoded, key)
 		for j := range decrypted {
 			_, ok := englishFrequencies[strings.ToLower(string(decrypted[j]))]
@@ -110,7 +104,7 @@ func decryptXorCipher(hexEncrypted []byte, numBytes int) ([]byte, int, byte, flo
 		}
 		if scores[plaintext[i]] >= maxScore {
 			maxScore = scores[plaintext[i]]
-			key = generateKey(plaintext, i, numBytes, len(decoded))
+			key = GenerateKey(plaintext, i, numBytes, len(decoded))
 			decrypted = Xor(decoded, key)
 		}
 	}
