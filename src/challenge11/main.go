@@ -19,12 +19,12 @@ func EncryptionOracle(input []byte, keySize int) ([]byte, error) {
 		IV:   cryptography.GetRandomByteString(blockSize),
 	}}
 
-	prePaddingSize := cryptography.GetRandomInteger(5, 11)
-	postPaddingSize := cryptography.GetRandomInteger(5, 11)
+	prePaddingSize := cryptography.GetRandomInteger(5, 10)
+	postPaddingSize := cryptography.GetRandomInteger(5, 10)
 	prePadding := cryptography.GetRandomByteString(prePaddingSize)
 	postPadding := cryptography.GetRandomByteString(postPaddingSize)
 	paddedInput, paddingLength := cryptography.AddPadding([]byte(string(prePadding)+string(input)+string(postPadding)), blockSize, rune('\x00'))
-	choice := cryptography.GetRandomInteger(0, 2)
+	choice := cryptography.GetRandomInteger(0, 1)
 	aesMode := &aesModes[choice%len(aesModes)]
 	fmt.Println("Encrypting under mode:", aesMode.Mode)
 	encrypted, err := cryptography.EncryptAES(paddedInput, key, aesMode)

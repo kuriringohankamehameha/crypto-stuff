@@ -77,7 +77,7 @@ func GetRandomInteger(a int, b int) int {
 	// Generates a random integer from [a, b]
 	seed := rand.NewSource(time.Now().UnixNano())
 	rand := rand.New(seed)
-	return a + rand.Intn(b-a)
+	return a + rand.Intn(b-a+1)
 }
 
 func GetRandomByteString(n int) []byte {
