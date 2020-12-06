@@ -38,9 +38,8 @@ func DetectAESMode(encrypted []byte, keySize int, repeatingBlockSize int) (strin
 	// Detects if the encrypted input belongs to ECB / CBC
 	// fmt.Printf("Encrypted Input: '%s'\n", encrypted)
 	repetitions := cryptography.GetRepetitions(encrypted, keySize)
-	normalizedRepetitions := repetitions
-	// fmt.Println("Repetitions Normalized:", normalizedRepetitions)
-	threshold := repeatingBlockSize / 2
+	normalizedRepetitions := float64(repetitions) / float64(keySize)
+	threshold := float64(repeatingBlockSize/2) / float64(keySize)
 	if normalizedRepetitions > threshold {
 		return "ECB", nil
 	} else {
