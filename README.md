@@ -93,4 +93,36 @@ The most natural approach would be to try to construct intentionally repetitions
 
 So I assume that we can extend the input size arbitrarily, and prepend a repeating sequence of "0" of length 512 bytes. Now, to this processed input (`000...00 + input`), we find the number of repeating ciphertext blocks, which will then give ECB if the repetitions are beyond a threshold (assume `min(inputSize/blockSize)`). Otherwise, it is in CBC mode.
 
+### Challenge 12
+
+I took a long time to solve this challenge, and I blame the question description for this. It seems that the new Oracle *shouldn't* use the random 5-10 bytes padding at the beginning and at the end, unlike the last challenge.
+
+So the approach is to first get the block size of the cipher, which can be found out via cummulating queries to the Oracle. Keep feeding in strings from "A", "AA", etc until we detect that the output length has increased. Therefore, `blockSize = len(newOutput) - len(prevOutput)`.
+
+Once we get the block size and verify that the Oracle uses `ECB` mode, we can try an attack which uses block based lookups to find the encryption match.
+
+Since ECB does the encryption in blocks, if we get the block size, we can get the decrypted bytes one by one. How? By feeding special sequences to the Oracle.
+
+We use a sequence block of the form `AAA...D1D2S1`, which can be understood as `[repeatingSequence, DecryptedSequence, SecretByte]`. We use a lookup table to construct a mapping from every encrypted string wrt this input sequence for every byte.
+
+We can then check this lookup table for the same prefix, without the trailing byte. Since the oracle will supply the unknown byte, all we need to do is to match that for every single block!
+
+However, if you use the same Oracle from the previous challenge, this won't generate consistent lookups, since the same encryption sequence will only map to a random padding byte. Random padding + ECB can't be broken using the lookup method.
+
+Roughly, the problem can be formulated as follows:
+
+```python
+def decrypt(offset, blockSize, prefix, repeatingSequence):
+	cipherText = oracle("")
+	decrypted = ""
+	while len(decrypted) < len(ciphterText)
+		for i in range(blockSize):
+			seq = repeatingSequence[:-i] + prefix
+			table = constructLookup(seq)
+			encrypted = oracle(repeatingSequence[:-i])
+			secretByte = lookup(table, encrypted[:blockSize])
+			decrypted += secretByte
+	return decrypted
+```
+
 **********************

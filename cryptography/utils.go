@@ -126,6 +126,22 @@ func getWords(data []byte) [][]byte {
 	return words
 }
 
+func constructLevensheinTable(a []byte, b []byte) [][]int {
+	// Constructs the levenshein distance table
+	// Measures the similarity between two strings
+	DP := make([][]int, len(a)*len(b))
+	for i := range a {
+		for j := range b {
+			diff := i - j
+			if diff <= 0 {
+				diff = -diff
+			}
+			DP[i][j] = diff + Intmin(Intmin(DP[Intmax(i-1, 0)][Intmax(j-1, 0)], DP[i][Intmax(j-1, 0)]), DP[Intmax(i-1, 0)][j])
+		}
+	}
+	return DP
+}
+
 func HammingDistance(a []byte, b []byte) int {
 	// Gives the number of different BITS
 	distance := 0
