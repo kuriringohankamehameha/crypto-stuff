@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 	"log"
 	"path"
+
 	"github.com/kuriringohankamehameha/crypto-stuff/cryptography"
 )
-
 
 func testAESCBC() {
 	// Test function to ensure that our AES CBC encryption-decryption functions are valid
@@ -15,13 +15,13 @@ func testAESCBC() {
 	key := []byte("ENCRYPTION KEYAB")
 	aesMode := &cryptography.AesMode{
 		Mode: "CBC",
-		IV: make([]byte, len(key)),
+		IV:   make([]byte, len(key)),
 	}
-	input, paddingSize := cryptography.AddPadding(input, len(key), '\x00')
+	input, _ = cryptography.PKCSPad(input, len(key))
 	encrypted, _ := cryptography.EncryptAES(input, key, aesMode)
 	fmt.Println("Encrypted:", string(encrypted))
 	decrypted, _ := cryptography.DecryptAES(encrypted, key, aesMode)
-	fmt.Printf("Decrypted: '%s'\n", string(decrypted[:len(decrypted)-paddingSize]))
+	fmt.Printf("Decrypted: '%s'\n", string(decrypted))
 }
 
 func main() {
@@ -33,10 +33,10 @@ func main() {
 	key := []byte("YELLOW SUBMARINE")
 	aesMode := &cryptography.AesMode{
 		Mode: "CBC",
-		IV: make([]byte, len(key)),
+		IV:   make([]byte, len(key)),
 	}
 	processed := cryptography.DecodeBase64(data)
-	input, paddingSize := cryptography.AddPadding(processed, len(key), '\x00')
+	input, _ := cryptography.PKCSPad(processed, len(key))
 	decrypted, _ := cryptography.DecryptAES(input, key, aesMode)
-	fmt.Printf("Decrypted: '%s'\n", string(decrypted[:len(decrypted)-paddingSize]))
+	fmt.Printf("Decrypted: '%s'\n", string(decrypted))
 }

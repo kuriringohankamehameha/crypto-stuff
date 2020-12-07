@@ -23,7 +23,7 @@ func EncryptionOracle(input []byte, keySize int) ([]byte, error) {
 	postPaddingSize := cryptography.GetRandomInteger(5, 10)
 	prePadding := cryptography.GetRandomByteString(prePaddingSize)
 	postPadding := cryptography.GetRandomByteString(postPaddingSize)
-	paddedInput, paddingLength := cryptography.AddPadding([]byte(string(prePadding)+string(input)+string(postPadding)), blockSize, rune('\x00'))
+	paddedInput, _ := cryptography.PKCSPad([]byte(string(prePadding)+string(input)+string(postPadding)), blockSize)
 	choice := cryptography.GetRandomInteger(0, 1)
 	aesMode := &aesModes[choice%len(aesModes)]
 	fmt.Println("Encrypting under mode:", aesMode.Mode)
@@ -31,7 +31,7 @@ func EncryptionOracle(input []byte, keySize int) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return encrypted[:len(encrypted)-paddingLength], nil
+	return encrypted, nil
 }
 
 func DetectAESMode(encrypted []byte, keySize int, repeatingBlockSize int) (string, error) {
