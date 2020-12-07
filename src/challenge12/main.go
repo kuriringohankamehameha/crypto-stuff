@@ -17,7 +17,7 @@ func EncryptionOracleECB(input []byte, globalKey []byte) ([]byte, error) {
 	blockSize := len(key)
 	data := append(input, unknownString...)
 	aesMode := &cryptography.AesMode{Mode: "ECB", IV: nil}
-	data, _ = cryptography.AddPadding(data, blockSize, rune('\x00'))
+	data, _ = cryptography.PKCSPad(data, blockSize)
 	result, _ := cryptography.EncryptAES(data, globalKey, aesMode)
 	return result, nil
 }
@@ -113,13 +113,7 @@ func main() {
 	mode, _ := DetectAESMode(encrypted, blockSize, 512)
 	fmt.Println("Mode:", mode)
 	word := getUnknownString(blockSize)
-	decrypted := make([]byte, 0)
-	for i := range word {
-		if word[i] == byte(0) {
-			break
-		}
-		decrypted = append(decrypted, word[i])
-	}
+	decrypted, _ := cryptography.PKCSUnpad(word, blockSize)
 	fmt.Printf("Decrypted Word = '%s'\n", string(decrypted))
 	if len(cryptography.DecodeBase64(textData)) != len(decrypted) {
 		fmt.Printf("Length: %d, but required = %d\n", len(decrypted), len(cryptography.DecodeBase64(textData)))

@@ -180,7 +180,7 @@ func GetRepetitions(cipherText []byte, keySize int) int {
 	// and tries to correlate the maximum repeating word to ECB encryption
 	cipherTexts := make([][]byte, 0)
 
-	cipherText, _ = AddPadding(cipherText, keySize, rune('\x00'))
+	cipherText, _ = PKCSPad(cipherText, keySize)
 	repetitions := 0
 
 	for i := 0; i < len(cipherText); i += keySize {
@@ -192,4 +192,41 @@ func GetRepetitions(cipherText []byte, keySize int) int {
 		cipherTexts = append(cipherTexts, cipherText[i:i+keySize])
 	}
 	return repetitions
+}
+
+func PKCSPad(input []byte, blockSize int) ([]byte, error) {
+	// Implements PKCS#7 Padding
+	// Pads N padding bits (each bit having the byte representation for N)
+	paddingSize := (blockSize - (len(input) % blockSize)) % blockSize
+	if paddingSize == 0 {
+		return input, nil
+	}
+	result := []byte(input)
+	for i := 0; i < paddingSize; i++ {
+		result = append(result, byte(paddingSize))
+	}
+	return result, nil
+}
+
+func PKCSUnpad(input []byte, blockSize int) ([]byte, error) {
+	if len(input) == 0 {
+		return input, nil
+	}
+	paddingByte := byte(string(input)[len(input)-1])
+	paddingSize := byte(paddingByte)
+	if int(paddingSize) >= blockSize {
+		return input, nil
+	} else {
+		flag := false
+		for i := byte(0); i < paddingSize; i++ {
+			if input[len(input)-int(i)-1] != paddingByte {
+				flag = true
+			}
+		}
+		if flag == false {
+			return input[:len(input)-int(paddingSize)], nil
+		} else {
+			return input, nil
+		}
+	}
 }
